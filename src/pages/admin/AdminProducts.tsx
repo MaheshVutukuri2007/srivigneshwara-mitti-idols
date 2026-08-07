@@ -192,20 +192,62 @@ export default function AdminProducts() {
       createdAt: editingProd?.createdAt || new Date().toISOString(),
     };
 
-    try {
-      if (editingProd) {
-        await updateDoc(doc(db, 'products', editingProd.id), prodData);
-      } else {
-        await addDoc(collection(db, 'products'), prodData);
-      }
-      setIsModalOpen(false);
-      await fetchData();
-    } catch (err: any) {
-      console.error('Error saving product:', err);
-      alert(`Failed to save product: ${err.message || 'Unknown database error'}`);
-    } finally {
-      setIsSaving(false);
-    }
+   try {
+
+  console.log("========== SAVE STARTED ==========");
+  console.log("Product Data:", prodData);
+
+  if (editingProd) {
+
+    console.log("Updating Product...");
+    console.log("Document ID:", editingProd.id);
+
+    await updateDoc(
+      doc(db, "products", editingProd.id),
+      prodData
+    );
+
+    console.log("✅ Product Updated Successfully");
+
+  } else {
+
+    console.log("Adding New Product...");
+
+    const ref = await addDoc(
+      collection(db, "products"),
+      prodData
+    );
+
+    console.log("✅ Product Added Successfully");
+    console.log("Document ID:", ref.id);
+
+  }
+
+  console.log("Refreshing Product List...");
+
+  setIsModalOpen(false);
+
+  await fetchData();
+
+  console.log("========== SAVE COMPLETED ==========");
+
+} catch (err: any) {
+
+  console.error("❌ SAVE FAILED");
+  console.error(err);
+
+  alert(
+    err?.message ||
+    "Failed to save product."
+  );
+
+} finally {
+
+  console.log("Loading Stopped");
+
+  setIsSaving(false);
+
+}
   };
 
   const handleDeleteProduct = async (id: string) => {
