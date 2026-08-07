@@ -10,7 +10,8 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() &&
              request.auth.token.email != null &&
-             request.auth.token.email == "mahesh.vutukuri267@gmail.com";
+             (request.auth.token.email.lower() == "mahesh.vutukuri267@gmail.com" ||
+              request.auth.token.email.lower() == "mahesh.vutukuri2647@gmail.com");
     }
 
     function isOwner(userId) {
@@ -18,23 +19,28 @@ service cloud.firestore {
     }
 
     match /products/{productId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /categories/{categoryId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /banners/{bannerId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /coupons/{couponId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /settings/{settingId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /reviews/{reviewId} {
@@ -62,9 +68,5 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // TEMPORARY: Allow access to any other collection
-    match /{document=**} {
-      allow read, write: if true;
-    }
   }
 }
