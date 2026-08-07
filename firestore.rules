@@ -17,32 +17,26 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Products
     match /products/{productId} {
       allow read, write: if true;
     }
 
-    // Categories
     match /categories/{categoryId} {
       allow read, write: if true;
     }
 
-    // Banners
     match /banners/{bannerId} {
       allow read, write: if true;
     }
 
-    // Coupons
     match /coupons/{couponId} {
       allow read, write: if true;
     }
 
-    // Settings
     match /settings/{settingId} {
       allow read, write: if true;
     }
 
-    // Reviews
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isAuthenticated();
@@ -50,12 +44,10 @@ service cloud.firestore {
         (isAuthenticated() && resource.data.customerId == request.auth.uid);
     }
 
-    // Customers
     match /customers/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();
     }
 
-    // Orders
     match /orders/{orderId} {
       allow create: if isAuthenticated();
       allow read: if isAdmin() ||
@@ -63,12 +55,16 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // Payments
     match /payments/{paymentId} {
       allow create: if isAuthenticated();
       allow read: if isAdmin() ||
         (isAuthenticated() && resource.data.customerId == request.auth.uid);
       allow update, delete: if isAdmin();
+    }
+
+    // TEMPORARY: Allow access to any other collection
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
