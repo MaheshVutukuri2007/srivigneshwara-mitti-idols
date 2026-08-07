@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon, Plus, Trash2, Upload } from 'lucide-react';
 import { collection, getDocs, addDoc, doc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { db, storage } from '../../lib/firebase';
 import { Banner } from '../../types';
 
 export default function AdminBanners() {
@@ -10,6 +11,9 @@ export default function AdminBanners() {
   const [subtitle, setSubtitle] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [buttonText, setButtonText] = useState('Order Eco Clay Idol');
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchBanners();
@@ -24,24 +28,42 @@ export default function AdminBanners() {
     }
   };
 
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setImageUrl(event.target.result as string);
-      }
-    };
-    reader.readAsDataURL(file);
     e.target.value = '';
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Banner image must be 5 MB or smaller.');
+      return;
+    }
+
+    setError('');
+    setUploading(true);
+    try {
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+      const imageRef = ref(storage, `banners/${Date.now()}-${safeFileName}`);
+      await uploadBytes(imageRef, file, { contentType: file.type });
+      setImageUrl(await getDownloadURL(imageRef));
+    } catch (err) {
+      console.error('Banner image upload failed:', err);
+      setError('Image upload failed. Ensure Firebase Storage is enabled and try again.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleAddBanner = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!imageUrl.trim()) return;
 
+    setError('');
+    setSaving(true);
     try {
       await addDoc(collection(db, 'banners'), {
         title,
@@ -56,7 +78,10 @@ export default function AdminBanners() {
       setImageUrl('');
       fetchBanners();
     } catch (err) {
-      console.error(err);
+      console.error('Banner publish failed:', err);
+      setError('Banner could not be published. Ensure Firestore is enabled and your Firebase rules allow this action.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -109,7 +134,7 @@ export default function AdminBanners() {
               />
               <div className="flex items-center justify-center space-x-2 text-stone-300 group-hover:text-[#FF7A00]">
                 <Upload className="w-4 h-4" />
-                <span className="font-bold">Choose Banner Photo File</span>
+                <span className="font-bold">{uploading ? 'Uploading Image...' : 'Choose Banner Photo File'}</span>
               </div>
             </div>
             <input
@@ -126,10 +151,11 @@ export default function AdminBanners() {
               <img src={imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
             </div>
           )}
+          {error && <p className="text-rose-400 font-bold">{error}</p>}
         </div>
 
-        <button type="submit" className="bg-[#FF7A00] text-white font-bold px-5 py-2.5 rounded-xl shadow">
-          Publish Banner
+        <button type="submit" disabled={uploading || saving} className="bg-[#FF7A00] text-white font-bold px-5 py-2.5 rounded-xl shadow disabled:opacity-50 disabled:cursor-not-allowed">
+          {saving ? 'Publishing...' : 'Publish Banner'}
         </button>
       </form>
 
