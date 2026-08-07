@@ -1,6 +1,9 @@
 import React from 'react';
-import { MapPin, Phone, Mail, Clock, MessageCircle } from 'lucide-react';
-import LocationPickerMap from '../components/LocationPickerMap';
+import { MapPin, Phone, Clock, MessageCircle, ExternalLink } from 'lucide-react';
+
+const STORE_ADDRESS = 'D.No. 73-1-5, MG Road, Patamata, Opposite High School Road Bus Stop, Vijayawada, Andhra Pradesh 520010';
+const STORE_MAP_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(STORE_ADDRESS)}`;
+const STORE_MAP_EMBED_URL = `https://www.google.com/maps?q=${encodeURIComponent(STORE_ADDRESS)}&z=17&output=embed`;
 
 export default function ContactPage() {
   return (
@@ -27,7 +30,7 @@ export default function ContactPage() {
                 <div>
                   <p className="font-bold text-stone-800 dark:text-stone-200">Address</p>
                   <p className="text-stone-600 dark:text-stone-400 mt-0.5">
-                    D.No. 73-1-5, MG Road, Patamata, Opp. High School Road Bus Stop, Vijayawada - 520010
+                    {STORE_ADDRESS}
                   </p>
                 </div>
               </div>
@@ -65,11 +68,18 @@ export default function ContactPage() {
             <h3 className="font-serif font-bold text-sm text-stone-900 dark:text-stone-100">
               Interactive Store Location Map
             </h3>
-            <LocationPickerMap
-              onLocationSelect={() => {}}
-              initialLat={16.5062}
-              initialLng={80.648}
-            />
+            <div className="overflow-hidden rounded-xl border border-amber-200 dark:border-stone-700">
+              <iframe
+                title="Sri Vigneshwara Mitti Idols store location"
+                src={STORE_MAP_EMBED_URL}
+                className="w-full h-80 border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+            <a href={STORE_MAP_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF7A00] hover:underline">
+              Open store location and directions in Google Maps <ExternalLink className="w-3.5 h-3.5" />
+            </a>
           </div>
         </div>
       </div>
