@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import LocationPickerMap from '../components/LocationPickerMap';
 import UpiQrPaymentModal from '../components/UpiQrPaymentModal';
+import GoogleIcon from '../components/GoogleIcon';
 import { Order, OrderLocation, DeliveryAddress } from '../types';
 
 export default function CheckoutPage() {
@@ -216,7 +217,6 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-stone-50 dark:bg-stone-950 py-12 px-4 flex items-center justify-center">
         <div className="max-w-md w-full bg-[#FFFDF7] dark:bg-stone-900 p-8 rounded-3xl border border-amber-900/10 shadow-lg space-y-6">
           <div className="text-center space-y-2">
-            <span className="text-2xl">🪔</span>
             <h2 className="font-serif font-bold text-2xl text-stone-900 dark:text-stone-100">
               {authMode === 'login' ? 'Login to Complete Order' : 'Create Customer Account'}
             </h2>
@@ -230,6 +230,7 @@ export default function CheckoutPage() {
             onClick={() => loginWithGoogle()}
             className="w-full bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow hover:bg-stone-50"
           >
+            <GoogleIcon />
             <span>Continue with Google Login</span>
           </button>
 

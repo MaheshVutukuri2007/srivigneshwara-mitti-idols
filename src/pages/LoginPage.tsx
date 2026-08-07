@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Sparkles, Lock, Mail, User, Phone, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import GoogleIcon from '../components/GoogleIcon';
 
 export default function LoginPage() {
   const { user, isAdmin, loginWithGoogle, loginWithEmail, signupWithEmail, resetPassword } = useAuth();
@@ -54,9 +54,6 @@ export default function LoginPage() {
     <div className="min-h-screen bg-stone-50 dark:bg-stone-950 py-16 px-4 flex items-center justify-center">
       <div className="max-w-md w-full bg-[#FFFDF7] dark:bg-stone-900 p-8 rounded-3xl border border-amber-900/10 dark:border-stone-800 shadow-xl space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-full bg-[#FF7A00] flex items-center justify-center text-white text-2xl mx-auto shadow">
-            🪔
-          </div>
           <h1 className="font-serif font-extrabold text-2xl text-stone-900 dark:text-stone-100">
             {mode === 'login' ? 'Welcome Back Devotee' : mode === 'signup' ? 'Create Customer Account' : 'Reset Password'}
           </h1>
@@ -70,6 +67,7 @@ export default function LoginPage() {
             onClick={() => loginWithGoogle()}
             className="w-full bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow hover:bg-stone-50"
           >
+            <GoogleIcon />
             <span>Sign In With Google Account</span>
           </button>
         )}
