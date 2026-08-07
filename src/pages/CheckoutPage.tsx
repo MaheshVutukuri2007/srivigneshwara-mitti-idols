@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Truck, MapPin, ArrowRight, QrCode } from 'lucide-react';
+import { ShieldCheck, Truck, MapPin, ArrowRight, QrCode, Tag } from 'lucide-react';
 import { addDoc, collection, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +11,16 @@ import { Order, OrderLocation, DeliveryAddress } from '../types';
 
 export default function CheckoutPage() {
   const { user, customerProfile, loginWithEmail, signupWithEmail, loginWithGoogle } = useAuth();
-  const { cartItems, subtotal, discountAmount, totalAmount, appliedCoupon, clearCart } = useCart();
+  const {
+    cartItems,
+    subtotal,
+    discountAmount,
+    totalAmount,
+    appliedCoupon,
+    applyCouponCode,
+    removeCoupon,
+    clearCart,
+  } = useCart();
   const navigate = useNavigate();
 
   // Login Form Toggle if guest
@@ -31,6 +40,8 @@ export default function CheckoutPage() {
   const [area, setArea] = useState('');
   const [pincode, setPincode] = useState('520002');
   const [notes, setNotes] = useState('');
+  const [couponInput, setCouponInput] = useState('');
+  const [couponMessage, setCouponMessage] = useState<{ success: boolean; message: string } | null>(null);
 
   const [paymentMethod, setPaymentMethod] = useState<'upi_qr' | 'cod'>('cod');
   const [upiId, setUpiId] = useState('');
@@ -67,6 +78,12 @@ export default function CheckoutPage() {
       console.error('Auth error in checkout:', err);
       setAuthError(err.message || 'Authentication failed. Please check your details.');
     }
+  };
+
+  const handleApplyCoupon = async () => {
+    const result = await applyCouponCode(couponInput);
+    setCouponMessage(result);
+    if (result.success) setCouponInput('');
   };
 
   const handleCreateOrder = async (e: React.FormEvent) => {
@@ -485,6 +502,38 @@ export default function CheckoutPage() {
               <h3 className="font-serif font-bold text-base text-stone-900 dark:text-stone-100 border-b border-stone-200 pb-3">
                 Order Review ({cartItems.length} Idols)
               </h3>
+
+              <div className="rounded-xl border border-amber-200/70 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20 p-3 space-y-2">
+                <p className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-[#FF7A00]" /> Promo Coupon
+                </p>
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between gap-3 text-xs">
+                    <div>
+                      <p className="font-bold text-emerald-700 dark:text-emerald-400">{appliedCoupon.code} applied</p>
+                      <p className="text-[10px] text-stone-500">You save {appliedCoupon.discountPercent}%</p>
+                    </div>
+                    <button type="button" onClick={() => { removeCoupon(); setCouponMessage(null); }} className="text-rose-600 font-bold hover:underline">
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(event) => setCouponInput(event.target.value)}
+                      onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void handleApplyCoupon(); } }}
+                      placeholder="Enter coupon code"
+                      className="min-w-0 flex-1 p-2 text-xs uppercase font-mono bg-white dark:bg-stone-800 rounded-lg border border-stone-200 dark:border-stone-700 outline-none"
+                    />
+                    <button type="button" onClick={() => void handleApplyCoupon()} className="px-3 py-2 text-xs font-bold text-white bg-[#FF7A00] hover:bg-amber-600 rounded-lg">
+                      Apply
+                    </button>
+                  </div>
+                )}
+                {couponMessage && <p className={`text-[10px] font-bold ${couponMessage.success ? 'text-emerald-600' : 'text-rose-600'}`}>{couponMessage.message}</p>}
+              </div>
 
               <div className="space-y-3 max-h-60 overflow-y-auto pr-1 text-xs">
                 {cartItems.map((item) => (
