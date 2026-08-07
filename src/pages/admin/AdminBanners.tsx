@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon, Plus, Trash2, Upload } from 'lucide-react';
 import { collection, getDocs, addDoc, doc, deleteDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { db, storage } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
+import { storage } from '../../lib/storage';
 import { Banner } from '../../types';
 
 export default function AdminBanners() {

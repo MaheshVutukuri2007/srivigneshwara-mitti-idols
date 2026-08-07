@@ -82,8 +82,6 @@ export async function checkAndSeedInitialData(): Promise<boolean> {
     if (!settingsSnapshot.exists()) {
       await setDoc(settingsRef, INITIAL_SETTINGS);
     }
-    // Clear initial demo records if they exist
-    await clearDemoDataFromFirestore();
     return true;
   } catch (error) {
     console.error('Error in store setup:', error);

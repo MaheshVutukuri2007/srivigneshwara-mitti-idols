@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { checkAndSeedInitialData } from './lib/seedData';
 
 // Public Components
 import Header from './components/Header';
@@ -14,35 +13,35 @@ import InstantSearchModal from './components/InstantSearchModal';
 import VisarjanGuideModal from './components/VisarjanGuideModal';
 
 // Public Pages
-import HomePage from './pages/HomePage';
-import ProductsPage from './pages/ProductsPage';
-import ProductDetailsPage from './pages/ProductDetailsPage';
-import CartPage from './pages/CartPage';
-import CheckoutPage from './pages/CheckoutPage';
-import OrderSuccessPage from './pages/OrderSuccessPage';
-import TrackOrderPage from './pages/TrackOrderPage';
-import WishlistPage from './pages/WishlistPage';
-import LoginPage from './pages/LoginPage';
-import ProfilePage from './pages/ProfilePage';
-import AboutPage from './pages/AboutPage';
-import ContactPage from './pages/ContactPage';
-import PolicyPage from './pages/PolicyPage';
+const HomePage = lazy(() => import('./pages/HomePage'));
+const ProductsPage = lazy(() => import('./pages/ProductsPage'));
+const ProductDetailsPage = lazy(() => import('./pages/ProductDetailsPage'));
+const CartPage = lazy(() => import('./pages/CartPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
+const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
+const WishlistPage = lazy(() => import('./pages/WishlistPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const PolicyPage = lazy(() => import('./pages/PolicyPage'));
 
 // Admin Pages
-import AdminLayout from './pages/admin/AdminLayout';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminOrders from './pages/admin/AdminOrders';
-import AdminProducts from './pages/admin/AdminProducts';
-import AdminCategories from './pages/admin/AdminCategories';
-import AdminBanners from './pages/admin/AdminBanners';
-import AdminCoupons from './pages/admin/AdminCoupons';
-import AdminReviews from './pages/admin/AdminReviews';
-import AdminCustomers from './pages/admin/AdminCustomers';
-import AdminPayments from './pages/admin/AdminPayments';
-import AdminAnalytics from './pages/admin/AdminAnalytics';
-import AdminInventory from './pages/admin/AdminInventory';
-import AdminDelivery from './pages/admin/AdminDelivery';
-import AdminSettings from './pages/admin/AdminSettings';
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
+const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
+const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
+const AdminBanners = lazy(() => import('./pages/admin/AdminBanners'));
+const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
+const AdminReviews = lazy(() => import('./pages/admin/AdminReviews'));
+const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers'));
+const AdminPayments = lazy(() => import('./pages/admin/AdminPayments'));
+const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
+const AdminInventory = lazy(() => import('./pages/admin/AdminInventory'));
+const AdminDelivery = lazy(() => import('./pages/admin/AdminDelivery'));
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
 
 function AppContent() {
   const location = useLocation();
@@ -50,11 +49,6 @@ function AppContent() {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isVisarjanOpen, setIsVisarjanOpen] = useState(false);
-
-  useEffect(() => {
-    // Ensure initial store settings are saved and clear any demo data
-    checkAndSeedInitialData().catch((err) => console.error('Setup error:', err));
-  }, []);
 
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors duration-200">
@@ -67,6 +61,7 @@ function AppContent() {
       )}
 
       <main className="flex-1">
+        <Suspense fallback={<div className="min-h-[40vh] flex items-center justify-center text-sm font-bold text-stone-500">Loading...</div>}>
         <Routes>
           {/* Storefront Routes */}
           <Route path="/" element={<HomePage onOpenVisarjan={() => setIsVisarjanOpen(true)} />} />
@@ -100,6 +95,7 @@ function AppContent() {
             <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>
+        </Suspense>
       </main>
 
       {!isAdminRoute && <Footer />}

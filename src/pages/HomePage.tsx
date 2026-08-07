@@ -15,7 +15,7 @@ import {
   ArrowRight,
   Phone,
 } from 'lucide-react';
-import { collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product, Category, Banner, Review } from '../types';
 import HeroBannerSlider from '../components/HeroBannerSlider';
@@ -37,25 +37,24 @@ export default function HomePage() {
   useEffect(() => {
     const loadHomeData = async () => {
       try {
-        // Fetch Banners
-        const bannersSnap = await getDocs(collection(db, 'banners'));
+        const [bannersSnap, prodSnap, catSnap, revSnap] = await Promise.all([
+          getDocs(collection(db, 'banners')),
+          getDocs(collection(db, 'products')),
+          getDocs(collection(db, 'categories')),
+          getDocs(collection(db, 'reviews')),
+        ]);
+
         if (!bannersSnap.empty) {
           setBanners(bannersSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Banner)));
         } else {
           setBanners([]);
         }
 
-        // Fetch Featured Products
-        const prodSnap = await getDocs(collection(db, 'products'));
         const allProds = prodSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Product));
         setFeaturedProducts(allProds.slice(0, 6));
 
-        // Fetch Categories
-        const catSnap = await getDocs(collection(db, 'categories'));
         setCategories(catSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Category)));
 
-        // Fetch Reviews
-        const revSnap = await getDocs(collection(db, 'reviews'));
         if (!revSnap.empty) {
           setReviews(revSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Review)));
         } else {
