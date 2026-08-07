@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon, Plus, Trash2, Upload } from 'lucide-react';
 import { collection, getDocs, addDoc, doc, deleteDoc } from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { db } from '../../lib/firebase';
-import { storage } from '../../lib/storage';
+import { compressAdminImage } from '../../lib/imageCompression';
 import { Banner } from '../../types';
 
 export default function AdminBanners() {
@@ -39,21 +38,18 @@ export default function AdminBanners() {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Banner image must be 5 MB or smaller.');
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Banner image must be 10 MB or smaller.');
       return;
     }
 
     setError('');
     setUploading(true);
     try {
-      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
-      const imageRef = ref(storage, `banners/${Date.now()}-${safeFileName}`);
-      await uploadBytes(imageRef, file, { contentType: file.type });
-      setImageUrl(await getDownloadURL(imageRef));
+      setImageUrl(await compressAdminImage(file));
     } catch (err) {
-      console.error('Banner image upload failed:', err);
-      setError('Image upload failed. Ensure Firebase Storage is enabled and try again.');
+      console.error('Banner image processing failed:', err);
+      setError(err instanceof Error ? err.message : 'Image processing failed. Please try another photo.');
     } finally {
       setUploading(false);
     }

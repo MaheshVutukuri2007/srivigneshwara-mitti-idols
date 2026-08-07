@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Layers, Plus, Trash2, Edit, Upload } from 'lucide-react';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { compressAdminImage } from '../../lib/imageCompression';
 import { Category } from '../../types';
 
 export default function AdminCategories() {
@@ -10,6 +11,8 @@ export default function AdminCategories() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [image, setImage] = useState('');
+  const [processingImage, setProcessingImage] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchCategories();
@@ -27,23 +30,35 @@ export default function AdminCategories() {
     }
   };
 
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setImage(event.target.result as string);
-      }
-    };
-    reader.readAsDataURL(file);
     e.target.value = '';
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Category image must be 10 MB or smaller.');
+      return;
+    }
+
+    setError('');
+    setProcessingImage(true);
+    try {
+      setImage(await compressAdminImage(file));
+    } catch (err) {
+      console.error('Category image processing failed:', err);
+      setError(err instanceof Error ? err.message : 'Image processing failed. Please try another photo.');
+    } finally {
+      setProcessingImage(false);
+    }
   };
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || processingImage) return;
 
     try {
       await addDoc(collection(db, 'categories'), {
@@ -57,7 +72,8 @@ export default function AdminCategories() {
       setImage('');
       fetchCategories();
     } catch (err) {
-      console.error(err);
+      console.error('Category creation failed:', err);
+      setError(err instanceof Error ? err.message : 'Could not create the category. Please try again.');
     }
   };
 
@@ -111,7 +127,7 @@ export default function AdminCategories() {
               />
               <div className="flex items-center justify-center space-x-2 text-stone-300 group-hover:text-[#FF7A00]">
                 <Upload className="w-4 h-4" />
-                <span className="font-bold">Choose Category Photo File</span>
+                <span className="font-bold">{processingImage ? 'Optimising Image...' : 'Choose Category Photo File'}</span>
               </div>
             </div>
             <input
@@ -122,6 +138,7 @@ export default function AdminCategories() {
               className="p-2.5 bg-stone-800 rounded-xl border border-stone-700 outline-none text-stone-100 font-mono flex-1 text-[11px]"
             />
           </div>
+          {error && <p className="text-rose-400 font-semibold">{error}</p>}
           {image && (
             <div className="w-20 h-20 rounded-xl border border-stone-700 overflow-hidden bg-stone-800">
               <img src={image} alt="Category Preview" className="w-full h-full object-cover" />
@@ -129,8 +146,8 @@ export default function AdminCategories() {
           )}
         </div>
 
-        <button type="submit" className="bg-[#FF7A00] text-white font-bold px-5 py-2.5 rounded-xl shadow">
-          Add Category
+        <button type="submit" disabled={processingImage} className="bg-[#FF7A00] text-white font-bold px-5 py-2.5 rounded-xl shadow disabled:opacity-50">
+          {processingImage ? 'Processing Image...' : 'Add Category'}
         </button>
       </form>
 

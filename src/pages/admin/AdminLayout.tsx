@@ -34,7 +34,7 @@ export default function AdminLayout() {
           <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto animate-bounce" />
           <h2 className="font-serif font-bold text-2xl">Access Denied</h2>
           <p className="text-xs text-stone-400">
-            You are logged in as <strong className="text-stone-200">{user?.email || 'Guest'}</strong>. Only the master admin account (<code className="text-[#FF7A00]">mahesh.vutukuri267@gmail.com</code>) has authorization to open the Enterprise Admin Panel.
+            You are logged in as <strong className="text-stone-200">{user?.email || 'Guest'}</strong>. Only an authorised administrator account has access to the Enterprise Admin Panel.
           </p>
           <Link
             to="/"
