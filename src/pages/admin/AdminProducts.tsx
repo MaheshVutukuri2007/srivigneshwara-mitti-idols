@@ -1,10 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Plus, Edit, Trash2, Star, Search, Upload, Loader2, Image as ImageIcon, X } from 'lucide-react';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { db } from '../../lib/firebase';
-import { storage } from '../../lib/storage';
 import { Product, Category } from '../../types';
+
+const MAX_PRODUCT_IMAGE_BYTES = 100 * 1024;
+
+// Product images are stored directly in Firestore. Keep each one compact so a product
+// document remains safely below Firestore's 1 MiB document limit, even with six photos.
+const compressImageFile = (file: File): Promise<string> => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onerror = () => reject(new Error('Could not read the selected image.'));
+  reader.onload = () => {
+    const source = new Image();
+    source.onerror = () => reject(new Error('Could not process the selected image.'));
+    source.onload = () => {
+      let maxDimension = 700;
+      let quality = 0.72;
+
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const scale = Math.min(1, maxDimension / Math.max(source.width, source.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(source.width * scale));
+        canvas.height = Math.max(1, Math.round(source.height * scale));
+        const context = canvas.getContext('2d');
+        if (!context) {
+          reject(new Error('Your browser cannot optimize this image.'));
+          return;
+        }
+        context.drawImage(source, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        const estimatedBytes = Math.ceil((dataUrl.length * 3) / 4);
+        if (estimatedBytes <= MAX_PRODUCT_IMAGE_BYTES) {
+          resolve(dataUrl);
+          return;
+        }
+        maxDimension = Math.round(maxDimension * 0.8);
+        quality = Math.max(0.35, quality - 0.06);
+      }
+      reject(new Error('This image is too detailed to optimize. Please choose a smaller image.'));
+    };
+    source.src = reader.result as string;
+  };
+  reader.readAsDataURL(file);
+});
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -69,8 +108,8 @@ export default function AdminProducts() {
       e.target.value = '';
       return;
     }
-    if (selectedFiles.some((file) => file.size > 5 * 1024 * 1024)) {
-      setImageError('Each product photo must be 5 MB or smaller.');
+    if (selectedFiles.some((file) => file.size > 10 * 1024 * 1024)) {
+      setImageError('Each product photo must be 10 MB or smaller.');
       e.target.value = '';
       return;
     }
@@ -78,18 +117,11 @@ export default function AdminProducts() {
     setImageError('');
     setIsProcessingImages(true);
     try {
-      // Store files in Firebase Storage and save only their download URLs in Firestore.
-      // Embedding image data in a product record can exceed Firestore's 1 MiB document limit.
-      const uploadedUrls = await Promise.all(selectedFiles.map(async (file) => {
-        const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
-        const imageRef = ref(storage, `products/${Date.now()}-${crypto.randomUUID()}-${safeFileName}`);
-        await uploadBytes(imageRef, file, { contentType: file.type });
-        return getDownloadURL(imageRef);
-      }));
-      setImages((prev) => [...prev, ...uploadedUrls]);
+      const compressedImages = await Promise.all(selectedFiles.map(compressImageFile));
+      setImages((prev) => [...prev, ...compressedImages]);
     } catch (err) {
-      console.error('Error uploading product images:', err);
-      setImageError('Image upload failed. Ensure Firebase Storage is enabled and try again.');
+      console.error('Error optimizing product images:', err);
+      setImageError(err instanceof Error ? err.message : 'Image processing failed. Please try another photo.');
     } finally {
       setIsProcessingImages(false);
       e.target.value = '';
@@ -536,10 +568,10 @@ export default function AdminProducts() {
                       </div>
                       <div>
                         <p className="font-bold text-stone-200 text-xs">
-                          {isProcessingImages ? 'Uploading image files...' : 'Click to Browse Files or Drag & Drop Photos'}
+                          {isProcessingImages ? 'Optimizing image files...' : 'Click to Browse Files or Drag & Drop Photos'}
                         </p>
                         <p className="text-[10px] text-stone-400 mt-0.5">
-                          Select up to 6 photo files (each 5 MB or smaller).
+                          Select up to 6 photo files (each 10 MB or smaller). Photos are optimized before saving.
                         </p>
                       </div>
                     </div>
