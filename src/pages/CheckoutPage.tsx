@@ -90,6 +90,19 @@ export default function CheckoutPage() {
       notes,
     };
 
+    // Older products and carts can omit optional item details. Firestore rejects
+    // `undefined` values, so copy only fields that are actually present.
+    const orderItems = cartItems.map((item) => ({
+      productId: item.productId,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      image: item.image,
+      ...(typeof item.originalPrice === 'number' ? { originalPrice: item.originalPrice } : {}),
+      ...(typeof item.heightInInches === 'number' ? { heightInInches: item.heightInInches } : {}),
+      ...(item.material ? { material: item.material } : {}),
+    }));
+
     const newOrder: Omit<Order, 'id'> = {
       orderNumber,
       customerId: user.uid,
@@ -99,7 +112,7 @@ export default function CheckoutPage() {
       altPhone,
       deliveryAddress,
       location: orderLocation,
-      items: cartItems,
+      items: orderItems,
       subtotal,
       discountAmount,
       totalAmount,
@@ -143,9 +156,9 @@ export default function CheckoutPage() {
         clearCart();
         navigate(`/order-success/${orderDocRef.id}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating order:', err);
-      alert('Failed to place order. Please try again.');
+      alert(`Could not place order: ${err?.message || 'Please try again.'}`);
       setPlacingOrder(false);
     }
   };
@@ -154,21 +167,9 @@ export default function CheckoutPage() {
     if (!createdOrderObj) return;
 
     try {
-      const orderRef = doc(db, 'orders', createdOrderObj.id);
-      await updateDoc(orderRef, {
-        ...(paymentReference ? { paymentId: paymentReference } : {}),
-        'statusHistory': [
-          ...createdOrderObj.statusHistory,
-          {
-            status: 'Pending',
-            timestamp: new Date().toISOString(),
-            note: paymentReference
-              ? `UPI payment submitted for verification. Transaction ID: ${paymentReference}`
-              : 'UPI payment submitted for verification.',
-          },
-        ],
-      });
-
+      // Customers can create payment requests but cannot update orders under the
+      // Firestore rules. Store the submitted UPI reference in the payment queue,
+      // where the admin can verify it against the personal UPI account.
       await addDoc(collection(db, 'payments'), {
         orderId: createdOrderObj.id,
         customerId: createdOrderObj.customerId,
@@ -184,8 +185,7 @@ export default function CheckoutPage() {
       navigate(`/order-success/${createdOrderObj.id}`);
     } catch (err) {
       console.error('Error saving UPI payment request:', err);
-      clearCart();
-      navigate(`/order-success/${createdOrderObj.id}`);
+      alert('We could not submit your payment reference. Please try again or contact the store before making another payment.');
     }
   };
 

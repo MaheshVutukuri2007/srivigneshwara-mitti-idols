@@ -195,9 +195,9 @@ export default function ProductsPage() {
               </div>
               <input
                 type="range"
-                min="300"
+                min="80"
                 max="5000"
-                step="100"
+                step="20"
                 value={priceRange}
                 onChange={(e) => setPriceRange(Number(e.target.value))}
                 className="w-full accent-[#FF7A00] cursor-pointer"

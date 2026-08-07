@@ -60,7 +60,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   if (appliedCoupon) {
     if (subtotal >= appliedCoupon.minOrderAmount) {
       const calculated = (subtotal * appliedCoupon.discountPercent) / 100;
-      discountAmount = Math.min(calculated, appliedCoupon.maxDiscount);
+      const maximumDiscount = appliedCoupon.maxDiscount ?? appliedCoupon.maxDiscountAmount ?? calculated;
+      discountAmount = Math.min(calculated, maximumDiscount);
     }
   }
 
@@ -82,11 +83,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           productId: product.id,
           name: product.name,
           price: product.price,
-          originalPrice: product.originalPrice,
           quantity: Math.min(product.stock, quantity),
           image: product.images[0] || '',
-          heightInInches: product.heightInInches,
-          material: product.material,
+          ...(typeof product.originalPrice === 'number' ? { originalPrice: product.originalPrice } : {}),
+          ...(typeof product.heightInInches === 'number' ? { heightInInches: product.heightInInches } : {}),
+          ...(product.material ? { material: product.material } : {}),
         };
         return [...prev, newItem];
       }
