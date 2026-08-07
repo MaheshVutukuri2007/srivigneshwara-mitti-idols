@@ -1,0 +1,6 @@
+{
+  "name": "Sri Vigneshwara Mitti Idols",
+  "description": "Eco-Friendly Handmade Ganesh Idols online store with doorstep delivery across Vijayawada, live inventory, and admin management.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

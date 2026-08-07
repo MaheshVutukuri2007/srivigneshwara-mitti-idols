@@ -1,0 +1,136 @@
+{
+  "entities": {
+    "products": {
+      "title": "products",
+      "description": "Eco-friendly Ganesh idols catalog",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "sku": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "discount": { "type": "number" },
+        "heightInInches": { "type": "number" },
+        "widthInInches": { "type": "number" },
+        "weightInKg": { "type": "number" },
+        "material": { "type": "string" },
+        "colour": { "type": "string" },
+        "stock": { "type": "number" },
+        "featured": { "type": "boolean" },
+        "trending": { "type": "boolean" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "price", "stock", "categoryId"]
+    },
+    "categories": {
+      "title": "categories",
+      "description": "Ganesh idol categories",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "image": { "type": "string" },
+        "description": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["name"]
+    },
+    "banners": {
+      "title": "banners",
+      "description": "Hero banners",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "linkUrl": { "type": "string" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["imageUrl"]
+    },
+    "coupons": {
+      "title": "coupons",
+      "description": "Discount coupons",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "discountPercent": { "type": "number" },
+        "maxDiscount": { "type": "number" },
+        "minOrderAmount": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["code", "discountPercent"]
+    },
+    "orders": {
+      "title": "orders",
+      "description": "Customer orders",
+      "type": "object",
+      "properties": {
+        "customerId": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "customerName": { "type": "string" },
+        "phone": { "type": "string" },
+        "deliveryAddress": { "type": "object" },
+        "totalAmount": { "type": "number" },
+        "orderStatus": { "type": "string" },
+        "paymentStatus": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["customerId", "customerName", "phone", "totalAmount"]
+    },
+    "reviews": {
+      "title": "reviews",
+      "description": "Product reviews",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "rating": { "type": "number" },
+        "reviewText": { "type": "string" },
+        "isApproved": { "type": "boolean" }
+      },
+      "required": ["productId", "rating", "reviewText"]
+    },
+    "customers": {
+      "title": "customers",
+      "description": "Registered customer profiles",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "addresses": { "type": "array" }
+      },
+      "required": ["email"]
+    },
+    "payments": {
+      "title": "payments",
+      "description": "Payment transactions",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string" },
+        "paymentReference": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["orderId", "amount"]
+    },
+    "settings": {
+      "title": "settings",
+      "description": "Store system configurations",
+      "type": "object",
+      "properties": {
+        "storeName": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsappNumber": { "type": "string" }
+      },
+      "required": ["storeName"]
+    }
+  }
+}
