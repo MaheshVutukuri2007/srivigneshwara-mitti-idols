@@ -103,7 +103,7 @@ export default function CheckoutPage() {
       subtotal,
       discountAmount,
       totalAmount,
-      couponCode: appliedCoupon?.code,
+      ...(appliedCoupon?.code ? { couponCode: appliedCoupon.code } : {}),
       paymentMethod,
       paymentStatus: 'Pending',
       orderStatus: 'Pending',
