@@ -8,7 +8,7 @@ export default function AdminCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [code, setCode] = useState('');
   const [discountPercent, setDiscountPercent] = useState<number>(10);
-  const [minOrderAmount, setMinOrderAmount] = useState<number>(500);
+  const [minOrderAmount, setMinOrderAmount] = useState<number>(80);
 
   useEffect(() => {
     fetchCoupons();
