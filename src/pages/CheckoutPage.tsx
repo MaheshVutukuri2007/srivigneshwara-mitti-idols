@@ -90,6 +90,10 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (!user) return;
     if (cartItems.length === 0) return;
+    if (!orderLocation.source || orderLocation.source === 'default') {
+      alert('Please use GPS or place the delivery pin on the map before placing your order.');
+      return;
+    }
 
     setPlacingOrder(true);
 

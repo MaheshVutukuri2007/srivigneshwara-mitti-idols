@@ -93,6 +93,8 @@ export interface OrderLocation {
   lng: number;
   addressString?: string;
   googleMapsUrl: string;
+  source?: 'default' | 'gps' | 'manual';
+  accuracyMeters?: number;
 }
 
 export interface DeliveryAddress {
