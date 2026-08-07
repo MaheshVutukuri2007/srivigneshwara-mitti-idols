@@ -1,20 +1,24 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Sri Vigneshwara Mitti Idols
 
-# Run and deploy your AI Studio app
+E-commerce website for Sri Vigneshwara eco-friendly clay idols in Vijayawada.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/cbf8fef6-5f1f-4cc9-a619-bb5c5e0d347f
+- Product catalogue, cart, checkout, coupons, and order tracking
+- Cash on Delivery and personal UPI QR payment option
+- Firebase authentication, Firestore data, and admin dashboard
+- Responsive React and Vite storefront
 
-## Run Locally
+## Run locally
 
-**Prerequisites:**  Node.js
+1. Install Node.js.
+2. Run `npm install`.
+3. Run `npm run dev`.
 
+The website opens at `http://localhost:3000`.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Deployment
+
+The app is configured for Vercel. Connect this GitHub repository to Vercel and deploy from the `main` branch.
+
+Before enabling customer sign-in, configure the Firebase project in `firebase-applet-config.json`, enable the required Firebase Authentication providers, and add the deployed Vercel domain to Firebase Authentication's authorized domains.
