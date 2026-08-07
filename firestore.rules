@@ -1,73 +1,74 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check if user is the designated admin
-    function isAdmin() {
-      return request.auth != null && 
-        (request.auth.token.email.lower() == 'mahesh.vutukuri267@gmail.com' ||
-         request.auth.token.email.lower() == 'mahesh.vutukuri2647@gmail.com');
-    }
 
-    // Helper function to check if user is logged in
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Helper function to check if request is for user's own data
+    function isAdmin() {
+      return isAuthenticated() &&
+             request.auth.token.email != null &&
+             request.auth.token.email == "mahesh.vutukuri267@gmail.com";
+    }
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Products collection: Public read and write
+    // Products
     match /products/{productId} {
       allow read, write: if true;
     }
 
-    // Categories collection: Public read and write
+    // Categories
     match /categories/{categoryId} {
       allow read, write: if true;
     }
 
-    // Banners collection: Public read and write
+    // Banners
     match /banners/{bannerId} {
       allow read, write: if true;
     }
 
-    // Coupons collection: Public read and write
+    // Coupons
     match /coupons/{couponId} {
       allow read, write: if true;
     }
 
-    // Settings collection: Public read and write
+    // Settings
     match /settings/{settingId} {
       allow read, write: if true;
     }
 
-    // Reviews collection: Public read approved reviews, Authenticated write own, Admin full access
+    // Reviews
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isAuthenticated();
-      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.customerId == request.auth.uid);
+      allow update, delete: if isAdmin() ||
+        (isAuthenticated() && resource.data.customerId == request.auth.uid);
     }
 
-    // Customers collection: Owner read/write, Admin full access
+    // Customers
     match /customers/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();
     }
 
-    // Orders collection: Customer can create & view their own orders, Admin full access
+    // Orders
     match /orders/{orderId} {
       allow create: if isAuthenticated();
-      allow read: if isAdmin() || (isAuthenticated() && resource.data.customerId == request.auth.uid);
+      allow read: if isAdmin() ||
+        (isAuthenticated() && resource.data.customerId == request.auth.uid);
       allow update, delete: if isAdmin();
     }
 
-    // Payments collection: Customer can view their own payment details, Admin full access
+    // Payments
     match /payments/{paymentId} {
       allow create: if isAuthenticated();
-      allow read: if isAdmin() || (isAuthenticated() && resource.data.customerId == request.auth.uid);
-      allow write: if isAdmin();
+      allow read: if isAdmin() ||
+        (isAuthenticated() && resource.data.customerId == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
   }
 }
