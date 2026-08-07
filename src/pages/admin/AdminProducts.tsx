@@ -1,48 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Plus, Edit, Trash2, Star, Search, Upload, Loader2, Image as ImageIcon, X } from 'lucide-react';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { db } from '../../lib/firebase';
+import { storage } from '../../lib/storage';
 import { Product, Category } from '../../types';
-
-// Canvas-based image compression helper to keep Base64 strings small (<150KB) and prevent Firestore document size errors
-const compressImageFile = (file: File, maxDimension = 1000, quality = 0.82): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(event.target?.result as string);
-          return;
-        }
-        ctx.drawImage(img, 0, 0, width, height);
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-        resolve(compressedDataUrl);
-      };
-      img.onerror = (err) => reject(err);
-      img.src = event.target?.result as string;
-    };
-    reader.onerror = (err) => reject(err);
-    reader.readAsDataURL(file);
-  });
-};
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -56,6 +18,7 @@ export default function AdminProducts() {
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
+  const [imageError, setImageError] = useState('');
 
   // Form Fields
   const [name, setName] = useState('');
@@ -95,15 +58,38 @@ export default function AdminProducts() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const selectedFiles: File[] = Array.from(files as Iterable<File>);
+    if (images.length + selectedFiles.length > 6) {
+      setImageError('A product can have a maximum of 6 photos.');
+      e.target.value = '';
+      return;
+    }
+    if (selectedFiles.some((file) => !file.type.startsWith('image/'))) {
+      setImageError('Please select image files only.');
+      e.target.value = '';
+      return;
+    }
+    if (selectedFiles.some((file) => file.size > 5 * 1024 * 1024)) {
+      setImageError('Each product photo must be 5 MB or smaller.');
+      e.target.value = '';
+      return;
+    }
+
+    setImageError('');
     setIsProcessingImages(true);
     try {
-      const compressedList = await Promise.all(
-        Array.from(files).map((file: File) => compressImageFile(file))
-      );
-      setImages((prev) => [...prev, ...compressedList]);
+      // Store files in Firebase Storage and save only their download URLs in Firestore.
+      // Embedding image data in a product record can exceed Firestore's 1 MiB document limit.
+      const uploadedUrls = await Promise.all(selectedFiles.map(async (file) => {
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+        const imageRef = ref(storage, `products/${Date.now()}-${crypto.randomUUID()}-${safeFileName}`);
+        await uploadBytes(imageRef, file, { contentType: file.type });
+        return getDownloadURL(imageRef);
+      }));
+      setImages((prev) => [...prev, ...uploadedUrls]);
     } catch (err) {
-      console.error('Error compressing uploaded images:', err);
-      alert('Failed to process one or more images.');
+      console.error('Error uploading product images:', err);
+      setImageError('Image upload failed. Ensure Firebase Storage is enabled and try again.');
     } finally {
       setIsProcessingImages(false);
       e.target.value = '';
@@ -112,6 +98,11 @@ export default function AdminProducts() {
 
   const handleAddImageUrl = () => {
     if (!imageUrlInput.trim()) return;
+    if (images.length >= 6) {
+      setImageError('A product can have a maximum of 6 photos.');
+      return;
+    }
+    setImageError('');
     setImages((prev) => [...prev, imageUrlInput.trim()]);
     setImageUrlInput('');
   };
@@ -151,6 +142,7 @@ export default function AdminProducts() {
       setIsTrending(false);
     }
     setImageUrlInput('');
+    setImageError('');
     setIsModalOpen(true);
   };
 
@@ -544,14 +536,16 @@ export default function AdminProducts() {
                       </div>
                       <div>
                         <p className="font-bold text-stone-200 text-xs">
-                          {isProcessingImages ? 'Optimizing image files...' : 'Click to Browse Files or Drag & Drop Photos'}
+                          {isProcessingImages ? 'Uploading image files...' : 'Click to Browse Files or Drag & Drop Photos'}
                         </p>
                         <p className="text-[10px] text-stone-400 mt-0.5">
-                          Select photo files from your device (automatically compressed).
+                          Select up to 6 photo files (each 5 MB or smaller).
                         </p>
                       </div>
                     </div>
                   </div>
+
+                  {imageError && <p className="text-[11px] font-semibold text-rose-400">{imageError}</p>}
 
                   {/* Or Input Direct Image URL */}
                   <div className="flex items-center gap-2">
@@ -666,4 +660,3 @@ export default function AdminProducts() {
     </div>
   );
 }
-
