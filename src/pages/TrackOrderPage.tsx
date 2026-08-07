@@ -25,7 +25,9 @@ export default function TrackOrderPage() {
     setErrorMsg('');
     setFoundOrder(null);
 
-    const term = orderQuery.trim().toUpperCase();
+    // Order numbers are shown with a leading '#' in a few customer screens.
+    // Accept either format when customers paste or type the number here.
+    const term = orderQuery.trim().toUpperCase().replace(/^#\s*/, '');
 
     try {
       // Firestore permits customers to read only their own orders. Fetch that
