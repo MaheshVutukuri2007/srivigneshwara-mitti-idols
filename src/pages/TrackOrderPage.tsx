@@ -4,8 +4,10 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Order } from '../types';
 import OrderTimeline from '../components/OrderTimeline';
+import { useAuth } from '../context/AuthContext';
 
 export default function TrackOrderPage() {
+  const { user } = useAuth();
   const [orderQuery, setOrderQuery] = useState('');
   const [foundOrder, setFoundOrder] = useState<Order | null>(null);
   const [searching, setSearching] = useState(false);
@@ -14,6 +16,11 @@ export default function TrackOrderPage() {
   const handleSearchOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orderQuery.trim()) return;
+    if (!user) {
+      setFoundOrder(null);
+      setErrorMsg('Please sign in with the account used to place this order.');
+      return;
+    }
     setSearching(true);
     setErrorMsg('');
     setFoundOrder(null);
@@ -21,19 +28,18 @@ export default function TrackOrderPage() {
     const term = orderQuery.trim().toUpperCase();
 
     try {
-      // Search by Order Number or ID
-      const qNum = query(collection(db, 'orders'), where('orderNumber', '==', term));
-      let snap = await getDocs(qNum);
+      // Firestore permits customers to read only their own orders. Fetch that
+      // scoped list first, then match the order number or phone locally.
+      const ownOrdersQuery = query(collection(db, 'orders'), where('customerId', '==', user.uid));
+      const snap = await getDocs(ownOrdersQuery);
+      const normalizedPhone = orderQuery.trim().replace(/\D/g, '');
+      const matchingOrder = snap.docs.find((orderDoc) => {
+        const order = orderDoc.data() as Order;
+        return order.orderNumber?.toUpperCase() === term || order.phone?.replace(/\D/g, '') === normalizedPhone;
+      });
 
-      if (snap.empty) {
-        // Try Phone search
-        const qPhone = query(collection(db, 'orders'), where('phone', '==', orderQuery.trim()));
-        snap = await getDocs(qPhone);
-      }
-
-      if (!snap.empty) {
-        const docObj = snap.docs[0];
-        setFoundOrder({ id: docObj.id, ...docObj.data() } as Order);
+      if (matchingOrder) {
+        setFoundOrder({ id: matchingOrder.id, ...matchingOrder.data() } as Order);
       } else {
         setErrorMsg('No delivery order found matching this Order Number or Phone Number.');
       }
