@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Filter, SlidersHorizontal, Search, RotateCcw, Sparkles } from 'lucide-react';
+import { Filter, SlidersHorizontal, Search, RotateCcw, Sparkles, MessageCircle } from 'lucide-react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product, Category } from '../types';
@@ -100,6 +100,21 @@ export default function ProductsPage() {
     setInStockOnly(false);
     setSortBy('featured');
     setSearchParams({});
+  };
+
+  const handleShareCatalogOnWhatsApp = () => {
+    const productsToShare = filteredProducts.slice(0, 20);
+    const productList = productsToShare.map((product, index) => {
+      const size = `${product.heightInInches || '-'}${product.widthInInches ? ` x ${product.widthInInches}` : ''} Inch`;
+      return `${index + 1}. *${product.name}*\n   • Price: ₹${product.price.toLocaleString('en-IN')}\n   • Size: ${size}\n   • Material: ${product.material || 'Natural Eco Clay (Mitti)'}`;
+    }).join('\n\n');
+    const remainingProductsNote = filteredProducts.length > productsToShare.length
+      ? `\n\n_And ${filteredProducts.length - productsToShare.length} more idols are available online._`
+      : '';
+    const storeUrl = window.location.origin;
+    const message = `*Sri Vigneshwara Eco Mitti Ganesh Idols* 🙏\nExplore our handcrafted eco-friendly Ganesh idols:\n\n${productList}${remainingProductsNote}\n\n📍 *Store Address:* D.No. 73-1-5, MG Road, Patamata, Vijayawada\n📞 *Direct WhatsApp Order:* +91 9390538027\n🌐 *Browse Online Store:* ${storeUrl}`;
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -241,7 +256,15 @@ export default function ProductsPage() {
                 Showing <strong className="text-stone-900 dark:text-stone-100">{filteredProducts.length}</strong> Eco Ganesh Idols
               </span>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleShareCatalogOnWhatsApp}
+                  disabled={filteredProducts.length === 0}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <MessageCircle className="w-4 h-4" /> Share Catalog on WhatsApp
+                </button>
                 <span className="text-stone-500 font-bold">Sort By:</span>
                 <select
                   value={sortBy}
